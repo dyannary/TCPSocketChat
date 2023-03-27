@@ -14,6 +14,8 @@ namespace Server
         private readonly Socket _serverSocket;
         private readonly IPEndPoint _serverEndPoint;
 
+        private readonly List<Socket> _clientSockets = new List<Socket>();
+
         public ServerSocket(string ip, int port)
         {
             var ipAddress = IPAddress.Parse(ip);
@@ -40,31 +42,55 @@ namespace Server
             }
         }
 
-        public void AcceptAndRecieve()
+        public async Task AcceptAndRecieve()
         {
-            Socket client = _serverSocket.Accept();
+            //Socket client = _serverSocket.Accept();
 
-            if(client != null) 
-            {
-                ReceiveMessage(client);
-            }
-        }
+            //if (client != null)
+            //{
+            //    ReceiveMessage(client);
+            //}
 
-        public void ReceiveMessage(Socket client)
-        {
             while(true)
             {
                 try
                 {
+                    Socket client = await _serverSocket.AcceptAsync();
+                    _clientSockets.Add(client);
+
+                    _ = Task.Factory.StartNew(() => ReceiveMessage(client));
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine("Error accepting");
+                    Console.WriteLine(e.Message);
+                    break;
+                }
+            }
+        }
+
+        public async Task ReceiveMessage(Socket client)
+        {
+            while(true)
+            {
+                try 
+                {
                     byte[] buffer = new byte[1024];
 
+                    
                     client.Receive(buffer);
 
                     string receivedMessage = Encoding.UTF8.GetString(buffer);
                     Console.WriteLine("Message from {0} - {1}", client.RemoteEndPoint, receivedMessage);
 
-                    SendMessage(client, receivedMessage);
-
+                    foreach (var clientC in _clientSockets)
+                    {
+                        if(clientC != client)
+                        {
+                           // _ = Task.Factory.StartNew(() => SendMessage(clientC, receivedMessage));
+                            SendMessage(clientC, receivedMessage);
+                        }
+                    }
                 }
                 catch(Exception e)
                 {
@@ -77,7 +103,9 @@ namespace Server
         {
             byte[] bytesMessage = Encoding.ASCII.GetBytes(message);
 
+            //Task.Factory.StartNew(() => ReceiveMessage(client));
             client.Send(bytesMessage);
+
         }
     }
 }

@@ -42,18 +42,15 @@ namespace Client
             {
                 try
                 {
-                    Console.Write("Your message: ");
-                    string message = Console.ReadLine() ?? "";
+                    byte[] messageReceived = new byte[1024];
+                    Task.Run(() => ReceiveMessage(messageReceived));
 
+                    Console.Write("Your message: ");
+
+                    string message = Console.ReadLine() ?? "";
                     byte[] bytesMessage = Encoding.UTF8.GetBytes(message);
 
-                    byte[] messageReceived = new byte[1024];
                     _clientSocket.Send(bytesMessage);
-
-                    _clientSocket.Receive(messageReceived);
-
-                    var receivedMessage = Encoding.UTF8.GetString(messageReceived);
-                    Console.WriteLine("Message recieved: {0}", receivedMessage);
                 }
                 catch (SocketException e)
                 {
@@ -61,7 +58,15 @@ namespace Client
                     Console.WriteLine(e);
                 }
             }
-           
+        }
+
+        public void ReceiveMessage(byte[] messageReceived)
+        {
+            _clientSocket.Receive(messageReceived);
+
+            var receivedMessage = Encoding.UTF8.GetString(messageReceived);
+            Console.WriteLine("\nMessage from {0} - {1}", _clientSocket.RemoteEndPoint, receivedMessage);
+
         }
     }
 }
