@@ -28,7 +28,6 @@ namespace Client
             try
             {
                 _clientSocket.Connect(endPoint);
-                Console.WriteLine("Client connected");
             }
             catch(Exception ex) 
             {
@@ -39,27 +38,30 @@ namespace Client
 
         public void StartSending()
         {
-            Console.Write("Your message: ");
-            string message = Console.ReadLine();
-
-            byte[] bytesMessage = Encoding.ASCII.GetBytes(message);
-
-            byte[] messageReceived = new byte[1024];
-
-            try
+            while(true)
             {
-                _clientSocket.Send(bytesMessage);
+                try
+                {
+                    Console.Write("Your message: ");
+                    string message = Console.ReadLine() ?? "";
 
-                _clientSocket.Receive(messageReceived);
+                    byte[] bytesMessage = Encoding.UTF8.GetBytes(message);
 
-                var receivedMessage = Encoding.ASCII.GetString(messageReceived);
-                Console.WriteLine("Message recieved: {0}", receivedMessage);
+                    byte[] messageReceived = new byte[1024];
+                    _clientSocket.Send(bytesMessage);
+
+                    _clientSocket.Receive(messageReceived);
+
+                    var receivedMessage = Encoding.UTF8.GetString(messageReceived);
+                    Console.WriteLine("Message recieved: {0}", receivedMessage);
+                }
+                catch (SocketException e)
+                {
+                    Console.WriteLine("Error sending data");
+                    Console.WriteLine(e);
+                }
             }
-            catch (SocketException e)
-            {
-                Console.WriteLine("Error sending data");
-                Console.WriteLine(e);
-            }
+           
         }
     }
 }

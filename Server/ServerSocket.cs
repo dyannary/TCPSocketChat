@@ -42,20 +42,11 @@ namespace Server
 
         public void AcceptAndRecieve()
         {
-            while(true)
-            {
-                try
-                {
-                    var client = _serverSocket.Accept();
-                    Console.WriteLine("Client accepted");
+            Socket client = _serverSocket.Accept();
 
-                    ReceiveMessage(client);
-                }
-                catch(Exception e) 
-                {
-                    Console.WriteLine("Error accepting");
-                    Console.WriteLine(e.Message);   
-                }
+            if(client != null) 
+            {
+                ReceiveMessage(client);
             }
         }
 
@@ -65,13 +56,14 @@ namespace Server
             {
                 try
                 {
-                    var bytesReceived = new byte[1024];
-                    client.Receive(bytesReceived);
-                    var receivedMessage = Encoding.ASCII.GetString(bytesReceived);
-                    Console.WriteLine("Message recieved: {0}", receivedMessage);
+                    byte[] buffer = new byte[1024];
 
-                    byte[] bytesMessage = Encoding.ASCII.GetBytes(receivedMessage);
-                    SendMessage(client, bytesMessage);
+                    client.Receive(buffer);
+
+                    string receivedMessage = Encoding.UTF8.GetString(buffer);
+                    Console.WriteLine("Message from {0} - {1}", client.RemoteEndPoint, receivedMessage);
+
+                    SendMessage(client, receivedMessage);
 
                 }
                 catch(Exception e)
@@ -81,9 +73,11 @@ namespace Server
                 }
             }
         }
-        public void SendMessage(Socket client, byte[] bytesMessages) 
+        public void SendMessage(Socket client, string message) 
         {
-            client.Send(bytesMessages);
+            byte[] bytesMessage = Encoding.ASCII.GetBytes(message);
+
+            client.Send(bytesMessage);
         }
     }
 }
